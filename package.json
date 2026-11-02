@@ -1,0 +1,46 @@
+{
+  "name": "supra-billing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test:rag": "tsx --test tests/rag-chat.test.ts",
+    "db:link": "npx supabase@latest link",
+    "db:push": "npx supabase@latest db push",
+    "db:push:seed": "npx supabase@latest db push --include-seed",
+    "db:new": "npx supabase@latest migration new",
+    "db:list": "npx supabase@latest migration list",
+    "db:types": "npx supabase@latest gen types typescript --linked > lib/database.types.ts",
+    "db:backup": "tsx --env-file=.env.local scripts/backup-data.ts",
+    "import:extract": "tsx scripts/import-bills/extract.ts",
+    "import:load": "tsx --env-file=.env.local scripts/import-bills/load.ts",
+    "import:catalog": "tsx --env-file=.env.local scripts/import-catalog/load.ts",
+    "import:sales-json": "tsx --env-file=.env.local scripts/import-sales-json/load.ts",
+    "pdf-test": "tsx scripts/pdf-test.ts"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.13",
+    "@supabase/supabase-js": "^2.118.0",
+    "exceljs": "^4.4.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
+    "next": "^15.5.28",
+    "openai": "^7.45.1",
+    "pdf-img-convert": "1.2.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "overrides": {
+    "pdf-img-convert": {
+      "canvas": "npm:@napi-rs/canvas@^1.0.13"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,15 @@
+node_modules
+.next
+.playwright-mcp/
+.env.local
+next-env.d.ts
+tsconfig.tsbuildinfo
+private-data/
+reports/
+private-data/out/sql/
+private-data/out/json/
+private-data/out/reports/
+oldbills/
+/customer_challans_clean*.csv
+/unique_items_clean.csv
+/bill_items*.csv
