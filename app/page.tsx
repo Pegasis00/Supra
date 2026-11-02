@@ -6,13 +6,17 @@ import { sb } from '@/lib/supabase';
 import { inr } from '@/lib/money';
 
 const shortcuts = [
-  { href: '/dashboard', code: '01', title: 'Dashboard', detail: 'Track sales, products and customers' },
-  { href: '/bills', code: '02', title: 'Sales bills', detail: 'Review and manage customer invoices' },
-  { href: '/purchase-bills', code: '03', title: 'Purchase bills', detail: 'Upload supplier invoices and receive stock' },
-  { href: '/inventory', code: '04', title: 'Inventory', detail: 'See current stock balances' },
-  { href: '/products', code: '05', title: 'Products', detail: 'Manage prices, GST and stock tracking' },
-  { href: '/customers', code: '06', title: 'Customers', detail: 'Keep customer details up to date' },
-  { href: '/ask-supra', code: '07', title: 'Ask Supra', detail: 'Find answers across your business records' },
+  { href: '/', code: '01', title: 'Overview', detail: 'Today at a glance and quick actions' },
+  { href: '/dashboard', code: '02', title: 'Dashboard', detail: 'Track sales, products and customers' },
+  { href: '/bills', code: '03', title: 'Sales bills', detail: 'Review and manage customer invoices' },
+  { href: '/customer-bills', code: '04', title: 'Customer ledger', detail: 'Track receivables and payments' },
+  { href: '/product-bills', code: '05', title: 'Product bills', detail: 'See customers and sales by product' },
+  { href: '/purchase-bills', code: '06', title: 'Purchase bills', detail: 'Upload supplier invoices and receive stock' },
+  { href: '/inventory', code: '07', title: 'Inventory', detail: 'See current stock balances' },
+  { href: '/products', code: '08', title: 'Products', detail: 'Manage prices, GST and stock tracking' },
+  { href: '/customers', code: '09', title: 'Customers', detail: 'Keep customer details up to date' },
+  { href: '/ask-supra', code: '10', title: 'Ask Supra', detail: 'Find answers across your business records' },
+  { href: '/settings', code: '11', title: 'Settings', detail: 'Manage business and invoice settings' },
 ];
 
 export default function Home() {

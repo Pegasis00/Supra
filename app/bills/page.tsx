@@ -11,7 +11,6 @@ type MonthGroup = { key: string; label: string; rows: Row[]; total: number };
 type YearGroup = { key: string; months: MonthGroup[]; count: number; total: number };
 
 const PAGE = 1000;
-const METHODS = ['Cash', 'UPI', 'Card', 'Bank transfer', 'Cheque', 'Other'];
 
 async function loadAll(): Promise<Row[]> {
   const out: Row[] = [];
@@ -35,13 +34,6 @@ export default function Bills() {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
-  const [payingId, setPayingId] = useState<string | null>(null);
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('UPI');
-  const [customMethod, setCustomMethod] = useState('');
-  const [paidOn, setPaidOn] = useState(new Date().toISOString().slice(0, 10));
-  const [paymentError, setPaymentError] = useState('');
-  const [savingPayment, setSavingPayment] = useState(false);
 
   useEffect(() => { loadAll().then(data => { setRows(data); setLoaded(true); if (data[0]) setOpen(new Set([data[0].invoice_date.slice(0, 4), data[0].invoice_date.slice(0, 7)])); }); }, []);
 
@@ -76,17 +68,6 @@ export default function Bills() {
   const isOpen = (key: string) => searching || open.has(key);
   const paid = (row: Row) => row.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
   const balance = (row: Row) => Math.max(0, Number(row.total) - paid(row));
-  const startPayment = (row: Row) => { setPayingId(row.id); setAmount(balance(row).toFixed(2)); setMethod('UPI'); setCustomMethod(''); setPaidOn(new Date().toISOString().slice(0, 10)); setPaymentError(''); };
-  async function savePayment(row: Row) {
-    const paymentMethod = method === 'Other' ? customMethod.trim() : method; const paymentAmount = Number(amount);
-    if (!paymentAmount || paymentAmount <= 0) return setPaymentError('Enter a valid payment amount.');
-    if (!paymentMethod) return setPaymentError('Enter a payment method.');
-    setSavingPayment(true); setPaymentError('');
-    const { data, error } = await sb().rpc('record_invoice_payment', { p_invoice_id: row.id, p_amount: paymentAmount, p_method: paymentMethod, p_paid_on: paidOn, p_note: null });
-    if (error) { setPaymentError(error.message); setSavingPayment(false); return; }
-    setRows(current => current.map(item => item.id === row.id ? { ...item, payments: [...item.payments, { id: String(data), amount: paymentAmount, method: paymentMethod, paid_on: paidOn, note: null }] } : item));
-    setPayingId(null); setSavingPayment(false);
-  }
 
   return <Shell title="Bills" back="/">
     <input placeholder="Search by customer, number or date (2025-06)…" value={q} onChange={e => setQ(e.target.value)} />
@@ -103,8 +84,7 @@ export default function Bills() {
             </button>
             {expandedPaymentId === r.id && <div className="bill-payment-details">
               {r.payments.length > 0 ? r.payments.map(payment => <div className="payment-detail" key={payment.id}><strong>₹ {inr(Number(payment.amount))}</strong><span>{payment.method} · {dmy(payment.paid_on)}</span></div>) : <span className="muted small">No payment recorded yet.</span>}
-              {balance(r) > 0.01 && payingId !== r.id && <button type="button" className="alt small" style={{ marginTop: 8 }} onClick={() => startPayment(r)}>Add payment</button>}
-              {payingId === r.id && <form onSubmit={event => { event.preventDefault(); void savePayment(r); }} onClick={event => event.stopPropagation()} style={{ marginTop: 8 }}><div className="row"><div><label>Amount</label><input type="number" min="0.01" max={balance(r).toFixed(2)} step="0.01" value={amount} onChange={event => setAmount(event.target.value)} /></div><div><label>Date</label><input type="date" value={paidOn} onChange={event => setPaidOn(event.target.value)} /></div></div><label>Method</label><select value={method} onChange={event => setMethod(event.target.value)}>{METHODS.map(option => <option key={option}>{option}</option>)}</select>{method === 'Other' && <input placeholder="Custom payment method" value={customMethod} onChange={event => setCustomMethod(event.target.value)} style={{ marginTop: 6 }} />}{paymentError && <p className="bad">{paymentError}</p>}<div className="row" style={{ marginTop: 7 }}><button type="submit" disabled={savingPayment}>{savingPayment ? 'Saving…' : 'Save payment'}</button><button type="button" className="alt" onClick={() => setPayingId(null)}>Cancel</button></div></form>}
+              {balance(r) > 0.01 && <p className="muted small" style={{ marginTop: 8 }}>Payment updates are available in Customer ledger.</p>}
             </div>}
           </div>}
         </div>)}</div>}

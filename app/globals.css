@@ -172,7 +172,7 @@ input:hover,select:hover,textarea:hover { border-color:#bdc7d7; }
 input:focus,select:focus,textarea:focus { border-color:var(--acc); outline:0; box-shadow:0 0 0 3px #536dfe1c; }
 input[type=checkbox] { width:16px; min-height:16px; height:16px; margin:0 8px 0 0; accent-color:var(--acc); }
 button,.btn { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:10px 15px; border:1px solid transparent; border-radius:9px; background:var(--acc); color:#fff; cursor:pointer; font-size:13px; font-weight:650; text-align:center; text-decoration:none; transition:background .15s ease,border-color .15s ease,color .15s ease,transform .15s ease,box-shadow .15s ease; }
-button:hover:not(:disabled),.btn:hover { background:var(--acc-dark); box-shadow:0 4px 12px #536dfe28; transform:translateY(-1px); }
+button:hover:not(:disabled),.btn:hover { background:var(--acc); color:#fff; box-shadow:0 5px 14px #536dfe24; transform:scale(1.02); }
 button:active:not(:disabled),.btn:active { transform:translateY(0); }
 button.alt,.btn.alt { border-color:var(--line); background:#fff; color:var(--ink-soft); }
 button.alt:hover:not(:disabled),.btn.alt:hover { border-color:#cbd3e0; background:#f8f9fc; box-shadow:none; }

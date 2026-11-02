@@ -8,6 +8,7 @@ type Row = { id: string; name: string; stock_qty: number };
 export default function Inventory() {
   const [rows, setRows] = useState<Row[]>([]);
   const [adjusting, setAdjusting] = useState<Row | null>(null);
+  const [openingMode, setOpeningMode] = useState(false);
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState('');
@@ -23,7 +24,8 @@ export default function Inventory() {
   async function saveAdjustment() {
     if (!adjusting) return;
     const delta = Number(quantity);
-    if (!Number.isFinite(delta) || delta === 0) return setError('Enter a nonzero quantity. Use a minus sign to reduce stock.');
+    if (!Number.isFinite(delta) || delta === 0) return setError('Enter a nonzero quantity.');
+    if (openingMode && delta < 0) return setError('Opening stock must be a positive quantity.');
     if (!reason.trim()) return setError('Add a reason for this stock update.');
     setBusy(true); setError(''); setMessage('');
     const { error } = await sb().rpc('adjust_stock', { p_product_id: adjusting.id, p_delta: delta, p_reason: reason.trim() });
@@ -33,7 +35,7 @@ export default function Inventory() {
       setError(missingFunction ? 'Stock updates are not installed in Supabase. Apply the database migrations with `npm run db:push`.' : error.message);
       return;
     }
-    setMessage(`${adjusting.name} stock updated.`); setAdjusting(null); setQuantity(''); setReason(''); await load();
+    setMessage(`${adjusting.name} stock updated.`); setAdjusting(null); setOpeningMode(false); setQuantity(''); setReason(''); await load();
   }
   const totalUnits = rows.reduce((sum, row) => sum + Number(row.stock_qty), 0);
 
@@ -45,16 +47,16 @@ export default function Inventory() {
         <div className="record-list-head"><span>PRODUCT</span><span>AVAILABLE</span></div>
         {rows.map(product => <div className="inventory-row" key={product.id}>
           <span className="inventory-product"><span className="inventory-product-mark">P</span><strong>{product.name}</strong></span>
-          <span className="stock-count"><span className={`stock-count ${Number(product.stock_qty) <= 5 ? 'stock-low' : ''}`}><strong>{Number(product.stock_qty).toLocaleString('en-IN')}</strong><small>units</small></span><button className="alt small" onClick={() => { setAdjusting(product); setQuantity(''); setReason(''); setError(''); }}>Update</button></span>
+          <span className="stock-count"><span className={`stock-count ${Number(product.stock_qty) <= 5 ? 'stock-low' : ''}`}><strong>{Number(product.stock_qty).toLocaleString('en-IN')}</strong><small>units</small></span><span className="row"><button className="alt small" onClick={() => { setAdjusting(product); setOpeningMode(true); setQuantity(''); setReason('Opening stock from previous year'); setError(''); }}>Opening stock</button><button className="alt small" onClick={() => { setAdjusting(product); setOpeningMode(false); setQuantity(''); setReason(''); setError(''); }}>Adjust</button></span></span>
         </div>)}
       </div>
       {adjusting && <section className="card" style={{ marginTop: 16 }}>
-        <strong>Update {adjusting.name}</strong>
-        <p className="muted small">Current available: {Number(adjusting.stock_qty).toLocaleString('en-IN')} units. Enter a positive number to add or a negative number to remove.</p>
-        <label>Quantity change</label><input type="number" step="0.001" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="e.g. 25 or -3" />
-        <label>Reason</label><input value={reason} onChange={e => setReason(e.target.value)} placeholder="Opening balance, damaged items, count correction..." />
+        <strong>{openingMode ? 'Add previous-year opening stock' : `Adjust ${adjusting.name}`}</strong>
+        <p className="muted small">Current available: {Number(adjusting.stock_qty).toLocaleString('en-IN')} units. {openingMode ? 'Enter the quantity carried forward from before the imported bills.' : 'Enter a positive number to add or a negative number to remove.'}</p>
+        <label>{openingMode ? 'Opening quantity' : 'Quantity change'}</label><input type="number" min={openingMode ? '0' : undefined} step="0.001" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder={openingMode ? 'e.g. 250' : 'e.g. 25 or -3'} />
+        <label>Reason</label><input value={reason} onChange={e => setReason(e.target.value)} readOnly={openingMode} placeholder="Damaged items, count correction..." />
         {error && <p className="bad small">{error}</p>}
-        <div className="row" style={{ marginTop: 12 }}><button className="alt" disabled={busy} onClick={() => setAdjusting(null)}>Cancel</button><button disabled={busy} onClick={saveAdjustment}>{busy ? 'Saving...' : 'Save stock update'}</button></div>
+        <div className="row" style={{ marginTop: 12 }}><button className="alt" disabled={busy} onClick={() => { setAdjusting(null); setOpeningMode(false); }}>Cancel</button><button disabled={busy} onClick={saveAdjustment}>{busy ? 'Saving...' : openingMode ? 'Save opening stock' : 'Save stock update'}</button></div>
       </section>}
       {message && <p className="muted small">{message}</p>}
     </> : <div className="empty-state"><span className="empty-state-mark">04</span><strong>No tracked stock yet</strong><p>Products marked for stock tracking will appear here after a purchase or adjustment.</p></div>}

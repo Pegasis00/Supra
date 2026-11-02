@@ -9,12 +9,14 @@ const navigation = [
   { href: '/', label: 'Overview', code: '01' },
   { href: '/dashboard', label: 'Dashboard', code: '02' },
   { href: '/bills', label: 'Sales bills', code: '03' },
-  { href: '/purchase-bills', label: 'Purchases', code: '04' },
-  { href: '/inventory', label: 'Inventory', code: '05' },
-  { href: '/products', label: 'Products', code: '06' },
-  { href: '/customers', label: 'Customers', code: '07' },
-  { href: '/ask-supra', label: 'Ask Supra', code: '08' },
-  { href: '/settings', label: 'Settings', code: '09' },
+  { href: '/customer-bills', label: 'Customer ledger', code: '04' },
+  { href: '/product-bills', label: 'Product bills', code: '05' },
+  { href: '/purchase-bills', label: 'Purchases', code: '06' },
+  { href: '/inventory', label: 'Inventory', code: '07' },
+  { href: '/products', label: 'Products', code: '08' },
+  { href: '/customers', label: 'Customers', code: '09' },
+  { href: '/ask-supra', label: 'Ask Supra', code: '10' },
+  { href: '/settings', label: 'Settings', code: '11' },
 ];
 
 export default function Shell({ title, back, children }: { title: string; back?: string; children: React.ReactNode }) {
