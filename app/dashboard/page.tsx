@@ -10,6 +10,7 @@ type SaleLine = { invoice_id: string; invoice_no: number; invoice_date: string; 
 type PurchaseBill = { id: string; party_name: string; bill_date: string; total: number | null; is_cancelled: boolean };
 type PurchaseLine = { purchase_bill_id: string; purchase_date: string; product_id: string | null; product_name: string; quantity: number; line_total: number | null; is_cancelled: boolean };
 type CatalogName = { id: string; name: string };
+type BalanceRow = { name: string; total: number; paid: number };
 
 const money = (value: number) => `₹ ${inr(value)}`;
 const monthName = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { month: 'short' });
@@ -24,6 +25,15 @@ function BarList({ rows, color, expanded, onToggle }: { rows: { name: string; va
     <div className="dash-bar-track"><i className={`dash-bar-fill ${color}`} style={{ width: `${Math.max(4, row.value / max * 100)}%` }} /></div>
     <strong>{money(row.value)}</strong>
   </div>)}{rows.length > 7 && <button className="dash-see-more" onClick={onToggle}>{expanded ? 'Show top 7' : `See all ${rows.length}`}</button>}</> : <p className="muted small">No matching records for these filters.</p>}</div>;
+}
+
+function BalanceList({ rows, payable, expanded, onToggle }: { rows: BalanceRow[]; payable?: boolean; expanded: boolean; onToggle: () => void }) {
+  const visible = expanded ? rows : rows.slice(0, 7);
+  return rows.length ? <>{visible.map((row) => <div className="balance-row" key={row.name}>
+    <div className="between"><strong>{row.name}</strong><span>Due ₹ {inr(Math.max(0, row.total - row.paid))}</span></div>
+    <div className={`balance-track${payable ? ' payable' : ''}`}><i style={{ width: `${row.total ? Math.min(100, row.paid / row.total * 100) : 0}%` }} /></div>
+    <small>{payable ? 'Paid' : 'Received'} ₹ {inr(row.paid)} of ₹ {inr(row.total)}</small>
+  </div>)}{rows.length > 7 && <button className="dash-see-more" onClick={onToggle}>{expanded ? 'Show top 7' : 'See all'}</button>}</> : <div className="dash-empty">{payable ? 'No supplier payables.' : 'No customer receivables.'}</div>;
 }
 
 export default function Dashboard() {
@@ -41,6 +51,10 @@ export default function Dashboard() {
   const [product, setProduct] = useState('all');
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [showAllCustomers, setShowAllCustomers] = useState(false);
+  const [showAllReceivables, setShowAllReceivables] = useState(false);
+  const [showAllPayables, setShowAllPayables] = useState(false);
+  const [receivables, setReceivables] = useState<BalanceRow[]>([]);
+  const [payables, setPayables] = useState<BalanceRow[]>([]);
 
   async function load() {
     setLoading(true); setError('');
@@ -57,6 +71,12 @@ export default function Dashboard() {
     setBills((b.data ?? []) as SaleBill[]); setLines((l.data ?? []) as SaleLine[]);
     setPurchaseBills((pb.data ?? []) as PurchaseBill[]); setPurchaseLines((pl.data ?? []) as PurchaseLine[]);
     setCustomerCatalog((customers.data ?? []) as CatalogName[]); setProductCatalog((products.data ?? []) as CatalogName[]);
+    const [salesData, purchaseData] = await Promise.all([
+      sb().from('sales_invoices').select('customer_name,total,status,payments:invoice_payments(amount)').eq('status', 'final').limit(10000),
+      sb().from('purchase_bills').select('supplier_name,grand_total,status,payments:purchase_bill_payments(amount)').eq('status', 'confirmed').limit(10000),
+    ]);
+    const collect = (rows: any[], totalKey: string) => { const map = new Map<string, BalanceRow>(); for (const row of rows) { const name = row[totalKey === 'total' ? 'customer_name' : 'supplier_name']; if (!name) continue; const current = map.get(name) ?? { name, total: 0, paid: 0 }; current.total += Number(row[totalKey] ?? 0); current.paid += (row.payments ?? []).reduce((sum: number, payment: any) => sum + Number(payment.amount ?? 0), 0); map.set(name, current); } return [...map.values()].sort((a, b) => b.total - a.total); };
+    setReceivables(collect(salesData.data ?? [], 'total')); setPayables(collect(purchaseData.data ?? [], 'grand_total'));
     setLoading(false);
   }
   useEffect(() => { void load(); }, []);
@@ -128,5 +148,9 @@ export default function Dashboard() {
       <div className="dash-panel"><div className="dash-panel-head"><div><p className="section-kicker">CUSTOMERS</p><h3>Top customers</h3></div><span className="muted small">by sales value</span></div><BarList rows={topCustomers} color="green" expanded={showAllCustomers} onToggle={() => setShowAllCustomers((value) => !value)} /></div>
     </section>
     <section className="dash-panel dash-recent"><div className="dash-panel-head"><div><p className="section-kicker">DETAIL</p><h3>Recent matching bills</h3></div><span className="muted small">{filteredBills.length} bills in selection</span></div>{filteredBills.length ? <div className="dash-table"><div className="dash-table-row dash-table-header"><span>Bill</span><span>Customer</span><span>Date</span><span className="right">Total</span></div>{[...filteredBills].sort((a, b) => b.bill_date.localeCompare(a.bill_date) || b.bill_no - a.bill_no).slice(0, 8).map((row) => <div className="dash-table-row" key={row.id}><span className="dash-bill-no">#{row.bill_no}</span><span>{row.party_name}</span><span className="muted">{new Date(`${row.bill_date}T00:00:00`).toLocaleDateString('en-IN')}</span><strong className="right">{money(Number(row.total))}</strong></div>)}</div> : <div className="dash-empty">No bills match the selected filters.</div>}</section>
+    <section className="dash-grid dash-grid-lists dash-balance-panels">
+      <div className="dash-panel"><div className="dash-panel-head"><div><p className="section-kicker">RECEIVABLES</p><h3>Customer payments</h3></div><span className="muted small">Due vs received</span></div><BalanceList rows={receivables} expanded={showAllReceivables} onToggle={() => setShowAllReceivables((value) => !value)} /></div>
+      <div className="dash-panel"><div className="dash-panel-head"><div><p className="section-kicker">PAYABLES</p><h3>Supplier payments</h3></div><span className="muted small">Purchase bills</span></div><BalanceList rows={payables} payable expanded={showAllPayables} onToggle={() => setShowAllPayables((value) => !value)} /></div>
+    </section>
   </Shell>;
 }
