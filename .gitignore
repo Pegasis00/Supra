@@ -13,3 +13,5 @@ oldbills/
 /customer_challans_clean*.csv
 /unique_items_clean.csv
 /bill_items*.csv
+
+.vercel
