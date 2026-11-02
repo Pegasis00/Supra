@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Shell from '@/components/Shell';
 import { sb } from '@/lib/supabase';
@@ -30,7 +30,7 @@ const lineMath = (line: Line) => {
   return { amount, tax, total };
 };
 
-export default function PurchaseBills() {
+function PurchaseBillsContent() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
   const [products, setProducts] = useState<Product[]>([]);
@@ -216,4 +216,10 @@ export default function PurchaseBills() {
       </section>
     </>}
   </Shell>;
+}
+
+export default function PurchaseBills() {
+  return <Suspense fallback={<Shell title="Purchase Bills" back="/"><p className="muted">Loading purchase bills...</p></Shell>}>
+    <PurchaseBillsContent />
+  </Suspense>;
 }
