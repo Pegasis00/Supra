@@ -51,6 +51,7 @@ function normalizeExtraction(value: unknown): unknown {
   const items = (Array.isArray(rawItems) ? rawItems : rawItems && typeof rawItems === 'object' ? [rawItems] : []).slice(0, 500);
   const result: Record<string, unknown> = {
     supplier_name: asString(pick(source, 'supplier_name', 'supplier', 'vendor_name', 'vendor')),
+    supplier_mobile: asString(pick(source, 'supplier_mobile', 'supplier_phone', 'phone', 'mobile', 'vendor_phone')),
     supplier_gstin: asString(pick(source, 'supplier_gstin', 'gstin', 'vendor_gstin')),
     supplier_address: asString(pick(source, 'supplier_address', 'address', 'vendor_address')),
     supplier_invoice_number: asString(pick(source, 'supplier_invoice_number', 'invoice_number', 'bill_number', 'bill_no', 'invoice_no')),
@@ -69,6 +70,7 @@ function normalizeExtraction(value: unknown): unknown {
         quantity: asNumber(pick(row, 'quantity', 'qty')),
         unit: asString(pick(row, 'unit', 'uom')),
         unit_rate: asNumber(pick(row, 'unit_rate', 'rate', 'price')),
+        discount: asNumber(pick(row, 'discount', 'discount_amount', 'disc')) ?? 0,
         line_total: asNumber(pick(row, 'line_total', 'amount', 'total', 'taxable_amount')),
         gst_rate: asNumber(pick(row, 'gst_rate', 'gst', 'tax_rate')),
         cgst: asNumber(pick(row, 'cgst')),
@@ -90,11 +92,11 @@ function validExtraction(value: unknown): value is Record<string, unknown> & { i
     if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
     const line = item as Record<string, unknown>;
     return nullableString(line.description) && nullableString(line.hsn) && nullableString(line.unit) &&
-      ['quantity','unit_rate','line_total','gst_rate','cgst','sgst','igst'].every(key => nullableNumber(line[key]));
+      ['quantity','unit_rate','discount','line_total','gst_rate','cgst','sgst','igst'].every(key => nullableNumber(line[key]));
   });
 }
 
-const extractionPrompt = 'Read this supplier bill and return ONLY compact valid JSON. Copy only visible facts; never guess; use null when absent. Date: YYYY-MM-DD. Preserve printed taxes. Fields: supplier_name, supplier_gstin, supplier_address, supplier_invoice_number, purchase_date, purchase_order_number, challan_number, items[{description,hsn,quantity,unit,unit_rate,line_total,gst_rate,cgst,sgst,igst}], subtotal, tax_total, round_off, grand_total. Use numbers for numeric fields. No markdown, explanation, or extra keys.';
+const extractionPrompt = 'Read this supplier bill and return ONLY compact valid JSON. Copy only visible facts; never guess; use null when absent. Date: YYYY-MM-DD. Preserve printed taxes. Fields: supplier_name, supplier_mobile, supplier_gstin, supplier_address, supplier_invoice_number, purchase_date, purchase_order_number, challan_number, items[{description,hsn,quantity,unit,unit_rate,discount,line_total,gst_rate,cgst,sgst,igst}], subtotal, tax_total, round_off, grand_total. Use numbers for numeric fields. No markdown, explanation, or extra keys.';
 
 const extractionResponseFormat = { type: 'json_object' as const };
 

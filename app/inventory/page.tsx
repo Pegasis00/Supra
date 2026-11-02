@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Shell from '@/components/Shell';
 import { sb } from '@/lib/supabase';
 
-type Row = { id: string; name: string; stock_qty: number };
+type Row = { id: string; name: string; stock_qty: number; opening_qty: number };
 
 export default function Inventory() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -15,8 +15,15 @@ export default function Inventory() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function load() {
-    const { data, error } = await sb().from('v_stock').select('product_id,name,stock_qty').eq('track_stock', true).eq('active', true).order('name');
-    if (!error) setRows((data ?? []).map((row: any) => ({ id: row.product_id, name: row.name, stock_qty: Number(row.stock_qty) })));
+    const [stock, movements] = await Promise.all([
+      sb().from('v_stock').select('product_id,name,stock_qty').eq('track_stock', true).eq('active', true).order('name'),
+      sb().from('stock_movements').select('product_id,qty_delta,reason').limit(100000),
+    ]);
+    if (!stock.error && !movements.error) {
+      const opening = new Map<string, number>();
+      for (const movement of movements.data ?? []) if (String(movement.reason).toLowerCase().startsWith('opening stock')) opening.set(movement.product_id, (opening.get(movement.product_id) ?? 0) + Number(movement.qty_delta));
+      setRows((stock.data ?? []).map((row: any) => ({ id: row.product_id, name: row.name, stock_qty: Number(row.stock_qty), opening_qty: opening.get(row.product_id) ?? 0 })));
+    }
   }
   useEffect(() => {
     void load();
@@ -37,6 +44,14 @@ export default function Inventory() {
     }
     setMessage(`${adjusting.name} stock updated.`); setAdjusting(null); setOpeningMode(false); setQuantity(''); setReason(''); await load();
   }
+  async function stopTracking(product: Row) {
+    if (!window.confirm(`Stop tracking stock for ${product.name}? Existing stock history will remain, but it will be hidden from Inventory.`)) return;
+    setBusy(true); setError('');
+    const { error: updateError } = await sb().from('products').update({ track_stock: false }).eq('id', product.id);
+    setBusy(false);
+    if (updateError) { setError(updateError.message); return; }
+    setMessage(`${product.name} is no longer tracked in Inventory.`); await load();
+  }
   const totalUnits = rows.reduce((sum, row) => sum + Number(row.stock_qty), 0);
 
   return <Shell title="Inventory" back="/">
@@ -47,13 +62,13 @@ export default function Inventory() {
         <div className="record-list-head"><span>PRODUCT</span><span>AVAILABLE</span></div>
         {rows.map(product => <div className="inventory-row" key={product.id}>
           <span className="inventory-product"><span className="inventory-product-mark">P</span><strong>{product.name}</strong></span>
-          <span className="stock-count"><span className={`stock-count ${Number(product.stock_qty) <= 5 ? 'stock-low' : ''}`}><strong>{Number(product.stock_qty).toLocaleString('en-IN')}</strong><small>units</small></span><span className="row"><button className="alt small" onClick={() => { setAdjusting(product); setOpeningMode(true); setQuantity(''); setReason('Opening stock from previous year'); setError(''); }}>Opening stock</button><button className="alt small" onClick={() => { setAdjusting(product); setOpeningMode(false); setQuantity(''); setReason(''); setError(''); }}>Adjust</button></span></span>
+          <span className="stock-count"><span className={`stock-count ${Number(product.stock_qty) <= 5 ? 'stock-low' : ''}`}><strong>{Number(product.stock_qty).toLocaleString('en-IN')}</strong><small>units</small></span><span className="inventory-actions"><button className="alt small" onClick={() => { setAdjusting(product); setOpeningMode(true); setQuantity(''); setReason('Opening stock from previous year'); setError(''); }}>Opening stock</button><button className="alt small" onClick={() => { setAdjusting(product); setOpeningMode(false); setQuantity(''); setReason(''); setError(''); }}>Adjust</button><button className="danger small" disabled={busy} onClick={() => void stopTracking(product)}>Stop tracking</button></span></span>
         </div>)}
       </div>
       {adjusting && <section className="card" style={{ marginTop: 16 }}>
         <strong>{openingMode ? 'Add previous-year opening stock' : `Adjust ${adjusting.name}`}</strong>
-        <p className="muted small">Current available: {Number(adjusting.stock_qty).toLocaleString('en-IN')} units. {openingMode ? 'Enter the quantity carried forward from before the imported bills.' : 'Enter a positive number to add or a negative number to remove.'}</p>
-        <label>{openingMode ? 'Opening quantity' : 'Quantity change'}</label><input type="number" min={openingMode ? '0' : undefined} step="0.001" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder={openingMode ? 'e.g. 250' : 'e.g. 25 or -3'} />
+        <p className="muted small">Current available: {Number(adjusting.stock_qty).toLocaleString('en-IN')} units. {openingMode ? 'Enter the quantity carried forward from before the imported bills.' : `You can reduce only down to protected opening stock: ${Number(adjusting.opening_qty).toLocaleString('en-IN')} units.`}</p>
+        <label>{openingMode ? 'Opening quantity' : 'Quantity change'}</label><input type="number" min={openingMode ? '0' : String(-(Number(adjusting.stock_qty) - Number(adjusting.opening_qty)))} step="0.001" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder={openingMode ? 'e.g. 250' : 'e.g. 25 or -3'} />
         <label>Reason</label><input value={reason} onChange={e => setReason(e.target.value)} readOnly={openingMode} placeholder="Damaged items, count correction..." />
         {error && <p className="bad small">{error}</p>}
         <div className="row" style={{ marginTop: 12 }}><button className="alt" disabled={busy} onClick={() => { setAdjusting(null); setOpeningMode(false); }}>Cancel</button><button disabled={busy} onClick={saveAdjustment}>{busy ? 'Saving...' : openingMode ? 'Save opening stock' : 'Save stock update'}</button></div>

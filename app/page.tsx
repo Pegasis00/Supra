@@ -12,11 +12,13 @@ const shortcuts = [
   { href: '/customer-bills', code: '04', title: 'Customer ledger', detail: 'Track receivables and payments' },
   { href: '/product-bills', code: '05', title: 'Product bills', detail: 'See customers and sales by product' },
   { href: '/purchase-bills', code: '06', title: 'Purchase bills', detail: 'Upload supplier invoices and receive stock' },
-  { href: '/inventory', code: '07', title: 'Inventory', detail: 'See current stock balances' },
-  { href: '/products', code: '08', title: 'Products', detail: 'Manage prices, GST and stock tracking' },
-  { href: '/customers', code: '09', title: 'Customers', detail: 'Keep customer details up to date' },
-  { href: '/ask-supra', code: '10', title: 'Ask Supra', detail: 'Find answers across your business records' },
-  { href: '/settings', code: '11', title: 'Settings', detail: 'Manage business and invoice settings' },
+  { href: '/supplier-ledger', code: '07', title: 'Supplier ledger', detail: 'Track supplier bills and payments' },
+  { href: '/inventory', code: '08', title: 'Inventory', detail: 'See current stock balances' },
+  { href: '/products', code: '09', title: 'Products', detail: 'Manage prices, GST and stock tracking' },
+  { href: '/customers', code: '10', title: 'Customers', detail: 'Keep customer details up to date' },
+  { href: '/ask-supra', code: '12', title: 'Ask Supra', detail: 'Find answers across your business records' },
+  { href: '/suppliers', code: '11', title: 'Suppliers', detail: 'Manage supplier details and contacts' },
+  { href: '/settings', code: '13', title: 'Settings', detail: 'Manage business and invoice settings' },
 ];
 
 export default function Home() {
