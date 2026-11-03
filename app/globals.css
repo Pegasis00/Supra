@@ -60,6 +60,7 @@ a { color:inherit; }
 .section-intro { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:-7px 0 20px; color:var(--muted); font-size:12px; }
 .section-intro p { margin:0; }
 .section-intro > span { color:#8792a7; font-size:10px; font-weight:650; letter-spacing:.07em; text-transform:uppercase; }
+.inventory-view-actions { display:flex; align-items:center; gap:12px; }
 .inventory-summary { display:flex; align-items:flex-end; justify-content:space-between; margin:0 0 20px; padding:20px 22px; border-left:3px solid var(--acc); background:#fff; }
 .inventory-summary > div { display:grid; gap:4px; }
 .inventory-summary .eyebrow { margin:0; }
@@ -82,6 +83,17 @@ a { color:inherit; }
 .empty-state-mark { display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--line); border-radius:13px; background:#fff; color:var(--acc-dark); font-size:11px; font-weight:700; }
 .empty-state strong { font:700 15px 'Manrope',ui-sans-serif,sans-serif; }
 .empty-state p { margin:0; color:var(--muted); font-size:12px; }
+.inventory-editor { margin:12px 10px 16px; border-color:#cfd6ff; background:#fbfcff; }
+.inventory-table-wrap { overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.inventory-table { width:100%; min-width:650px; border-collapse:collapse; font-size:12px; }
+.inventory-table th,.inventory-table td { padding:12px 14px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+.inventory-table th { color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
+.inventory-table tbody tr:hover { background:#fafbff; }
+.inventory-table tfoot th { border-bottom:0; color:var(--ink); font-size:12px; text-transform:none; }
+.inventory-table tfoot th:first-child { text-align:left; }
+.inventory-rate-cell { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+.inventory-rate-input { width:92px; min-height:32px; padding:6px 8px; font-size:11px; }
+.inventory-rate-cell button { min-height:30px; padding:5px 8px; font-size:10px; }
 
 .overview-layout { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr); gap:14px; }
 .today-panel,.quick-action-panel { min-height:210px; display:flex; flex-direction:column; justify-content:space-between; border-radius:var(--radius); padding:25px 27px; }
