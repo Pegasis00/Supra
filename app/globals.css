@@ -136,6 +136,30 @@ a { color:inherit; }
 .dash-kpis strong { font:750 22px/1.1 'Manrope',sans-serif; letter-spacing:-.045em; font-variant-numeric:tabular-nums; }
 .dash-kpis small { font-size:10px; }
 .dash-grid { display:grid; gap:14px; margin-bottom:14px; }
+.dash-payment-summaries { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.dash-payment-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:4px; }
+.dash-payment-summary > div { display:grid; gap:4px; min-width:0; }
+.dash-payment-summary span { color:var(--muted); font-size:10px; }
+.dash-payment-summary strong { overflow-wrap:anywhere; font:750 clamp(14px,1.8vw,18px)/1.2 'Manrope',sans-serif; letter-spacing:-.04em; }
+.dash-payment-summary .positive { color:var(--good); }
+.dash-payment-summary .negative { color:var(--bad); }
+.balance-summary-track { height:8px; margin-top:18px; overflow:hidden; border-radius:99px; background:#edf0f5; }
+.balance-summary-track i { display:block; height:100%; border-radius:inherit; background:var(--good); transition:width .3s ease; }
+.balance-summary-track.payable i { background:var(--acc); }
+.dash-payment-card { cursor:pointer; text-align:left; transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease; }
+.dash-payment-card:hover { border-color:#cbd3ff; box-shadow:0 7px 22px #1720330c; transform:translateY(-1px); }
+.dash-payment-card:focus-visible { outline:3px solid #8191ff88; outline-offset:2px; }
+.dash-balance-table { display:grid; min-width:0; }
+.dash-balance-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(95px,.8fr) minmax(105px,.8fr) minmax(95px,.8fr); align-items:center; gap:12px; }
+.dash-balance-header { min-height:30px; color:#8a95a8; font-size:9px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+.dash-balance-grid > :not(:first-child) { text-align:right; }
+.dash-balance-item { min-height:48px; padding:9px 0; border-top:1px solid #eef0f4; font-size:11px; }
+.dash-balance-item > strong { min-width:0; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; white-space:normal; }
+.dash-balance-received { color:var(--good); font-weight:700; }
+.dash-balance-due { color:var(--bad); font-weight:700; }
+.dash-balance-total { min-height:48px; padding:10px 0 2px; border-top:2px solid var(--line); font-size:11px; }
+.dash-see-more { align-self:start; }
+.dash-scroll-target { scroll-margin-top:20px; }
 .dash-grid-main { grid-template-columns:minmax(0,1.45fr) minmax(260px,.55fr); }
 .dash-grid-lists { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .dash-panel { min-width:0; padding:20px; border:1px solid var(--line); border-radius:14px; background:#fff; }
@@ -412,7 +436,9 @@ button:disabled { cursor:not-allowed; opacity:.5; }
   .dash-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .dash-kpis > div { min-height:95px; padding:14px; }
   .dash-kpis strong { font-size:18px; }
-  .dash-grid-main,.dash-grid-lists { grid-template-columns:1fr; }
+  .dash-grid-main,.dash-grid-lists,.dash-payment-summaries { grid-template-columns:1fr; }
+  .dash-payment-summary { grid-template-columns:1fr; gap:10px; }
+  .dash-payment-summary strong { font-size:18px; }
   .dash-panel { padding:16px; }
   .dash-chart { gap:7px; height:175px; }
   .dash-column-value { font-size:8px; }

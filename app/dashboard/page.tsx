@@ -36,6 +36,20 @@ function BalanceList({ rows, payable, expanded, onToggle }: { rows: BalanceRow[]
   </div>)}{rows.length > 7 && <button className="dash-see-more" onClick={onToggle}>{expanded ? 'Show top 7' : 'See all'}</button>}</> : <div className="dash-empty">{payable ? 'No supplier payables.' : 'No customer receivables.'}</div>;
 }
 
+function DetailedBalanceList({ rows, payable, expanded, onToggle }: { rows: BalanceRow[]; payable?: boolean; expanded: boolean; onToggle: () => void }) {
+  const visible = expanded ? rows : rows.slice(0, 7);
+  const total = rows.reduce((sum, row) => sum + row.total, 0);
+  const paid = rows.reduce((sum, row) => sum + row.paid, 0);
+  return rows.length ? <div className="dash-balance-table">
+    <div className="dash-balance-grid dash-balance-header"><span>Name</span><span>Total</span><span>{payable ? 'Paid' : 'Received'}</span><span>Due</span></div>
+    {visible.map((row) => <div className="dash-balance-grid dash-balance-item" key={row.name}>
+      <strong>{row.name}</strong><span>{money(row.total)}</span><span className="dash-balance-received">{money(row.paid)}</span><span className="dash-balance-due">{money(Math.max(0, row.total - row.paid))}</span>
+    </div>)}
+    <div className="dash-balance-grid dash-balance-total"><strong>Total</strong><strong>{money(total)}</strong><strong className="dash-balance-received">{money(paid)}</strong><strong className="dash-balance-due">{money(Math.max(0, total - paid))}</strong></div>
+    {rows.length > 7 && <button className="dash-see-more" onClick={onToggle}>{expanded ? 'Show top 7' : 'See all'}</button>}
+  </div> : <div className="dash-empty">{payable ? 'No supplier payables.' : 'No customer receivables.'}</div>;
+}
+
 export default function Dashboard() {
   const [bills, setBills] = useState<SaleBill[]>([]);
   const [lines, setLines] = useState<SaleLine[]>([]);
@@ -123,6 +137,11 @@ export default function Dashboard() {
   const sales = filteredBills.reduce((sum, row) => sum + Number(row.total), 0);
   const units = filteredLines.reduce((sum, row) => sum + Number(row.quantity), 0);
   const purchases = matchingPurchaseBills.reduce((sum, row) => sum + (Number(row.total) || 0), 0);
+  const receivableTotal = receivables.reduce((sum, row) => sum + row.total, 0);
+  const receivedTotal = receivables.reduce((sum, row) => sum + row.paid, 0);
+  const payableTotal = payables.reduce((sum, row) => sum + row.total, 0);
+  const paidTotal = payables.reduce((sum, row) => sum + row.paid, 0);
+  const jumpTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return <Shell title="Dashboard">
     <div className="dashboard-head"><div><p className="section-kicker">BUSINESS PULSE</p><h2>See what is moving.</h2><p className="muted">Filter the same view by financial year, month, customer, or product.</p></div><button className="alt small" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh data'}</button></div>
@@ -139,6 +158,10 @@ export default function Dashboard() {
       <div><span>Average bill</span><strong>{money(filteredBills.length ? sales / filteredBills.length : 0)}</strong><small>per completed bill</small></div>
       <div><span>Purchases</span><strong>{money(purchases)}</strong><small>{matchingPurchaseBills.length} matching bills</small></div>
     </section>
+    <section className="dash-grid dash-payment-summaries" aria-label="Payment summaries">
+      <div className="dash-panel dash-payment-card" role="button" tabIndex={0} onClick={() => jumpTo('customer-receivables')} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') jumpTo('customer-receivables'); }}><div className="dash-panel-head"><div><p className="section-kicker">CUSTOMER RECEIVABLES</p><h3>Customer payments</h3></div><span className="muted small">What customers owe vs received</span></div><div className="dash-payment-summary"><div><span>Total billed</span><strong>{money(receivableTotal)}</strong></div><div><span>Received</span><strong className="positive">{money(receivedTotal)}</strong></div><div><span>Outstanding</span><strong className="negative">{money(Math.max(0, receivableTotal - receivedTotal))}</strong></div></div><div className="balance-summary-track"><i style={{ width: `${receivableTotal ? Math.min(100, receivedTotal / receivableTotal * 100) : 0}%` }} /></div><small className="muted">{receivableTotal ? Math.round(receivedTotal / receivableTotal * 100) : 0}% received · Click to view customer details</small></div>
+      <div className="dash-panel dash-payment-card" role="button" tabIndex={0} onClick={() => jumpTo('supplier-payables')} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') jumpTo('supplier-payables'); }}><div className="dash-panel-head"><div><p className="section-kicker">SUPPLIER PAYABLES</p><h3>Supplier payments</h3></div><span className="muted small">What you owe vs paid</span></div><div className="dash-payment-summary"><div><span>Total purchased</span><strong>{money(payableTotal)}</strong></div><div><span>Paid</span><strong className="positive">{money(paidTotal)}</strong></div><div><span>Outstanding</span><strong className="negative">{money(Math.max(0, payableTotal - paidTotal))}</strong></div></div><div className="balance-summary-track payable"><i style={{ width: `${payableTotal ? Math.min(100, paidTotal / payableTotal * 100) : 0}%` }} /></div><small className="muted">{payableTotal ? Math.round(paidTotal / payableTotal * 100) : 0}% paid · Click to view supplier details</small></div>
+    </section>
     <section className="dash-grid dash-grid-main">
       <div className="dash-panel dash-trend"><div className="dash-panel-head"><div><p className="section-kicker">SALES TREND</p><h3>Revenue by month</h3></div><span className="muted small">Final bills only</span></div>{trend.length ? <div className="dash-chart" aria-label="Sales by month bar chart">{trend.map(([key, value]) => { const max = Math.max(...trend.map(([, amount]) => amount), 1); return <div className="dash-column" key={key}><div className="dash-column-value">{money(value)}</div><i style={{ height: `${Math.max(5, value / max * 100)}%` }} /><small>{monthName(`${key}-01`)}</small></div>; })}</div> : <div className="dash-empty">No sales for this selection.</div>}</div>
       <div className="dash-panel dash-snapshot"><div className="dash-panel-head"><div><p className="section-kicker">QUICK READ</p><h3>Selected period</h3></div></div><div className="dash-snapshot-list"><div><span>Best product</span><strong>{topProducts[0]?.name ?? '—'}</strong></div><div><span>Best customer</span><strong>{topCustomers[0]?.name ?? '—'}</strong></div><div><span>Sales minus purchases</span><strong className={sales - purchases >= 0 ? 'positive' : 'negative'}>{money(sales - purchases)}</strong></div></div></div>
@@ -149,8 +172,8 @@ export default function Dashboard() {
     </section>
     <section className="dash-panel dash-recent"><div className="dash-panel-head"><div><p className="section-kicker">DETAIL</p><h3>Recent matching bills</h3></div><span className="muted small">{filteredBills.length} bills in selection</span></div>{filteredBills.length ? <div className="dash-table"><div className="dash-table-row dash-table-header"><span>Bill</span><span>Customer</span><span>Date</span><span className="right">Total</span></div>{[...filteredBills].sort((a, b) => b.bill_date.localeCompare(a.bill_date) || b.bill_no - a.bill_no).slice(0, 8).map((row) => <div className="dash-table-row" key={row.id}><span className="dash-bill-no">#{row.bill_no}</span><span>{row.party_name}</span><span className="muted">{new Date(`${row.bill_date}T00:00:00`).toLocaleDateString('en-IN')}</span><strong className="right">{money(Number(row.total))}</strong></div>)}</div> : <div className="dash-empty">No bills match the selected filters.</div>}</section>
     <section className="dash-grid dash-grid-lists dash-balance-panels">
-      <div className="dash-panel"><div className="dash-panel-head"><div><p className="section-kicker">RECEIVABLES</p><h3>Customer payments</h3></div><span className="muted small">Due vs received</span></div><BalanceList rows={receivables} expanded={showAllReceivables} onToggle={() => setShowAllReceivables((value) => !value)} /></div>
-      <div className="dash-panel"><div className="dash-panel-head"><div><p className="section-kicker">PAYABLES</p><h3>Supplier payments</h3></div><span className="muted small">Purchase bills</span></div><BalanceList rows={payables} payable expanded={showAllPayables} onToggle={() => setShowAllPayables((value) => !value)} /></div>
+      <div id="customer-receivables" className="dash-panel dash-scroll-target"><div className="dash-panel-head"><div><p className="section-kicker">RECEIVABLES</p><h3>Customer payments</h3></div><span className="muted small">Total, received and due</span></div><DetailedBalanceList rows={receivables} expanded={showAllReceivables} onToggle={() => setShowAllReceivables((value) => !value)} /></div>
+      <div id="supplier-payables" className="dash-panel dash-scroll-target"><div className="dash-panel-head"><div><p className="section-kicker">PAYABLES</p><h3>Supplier payments</h3></div><span className="muted small">Total, paid and due</span></div><DetailedBalanceList rows={payables} payable expanded={showAllPayables} onToggle={() => setShowAllPayables((value) => !value)} /></div>
     </section>
   </Shell>;
 }
