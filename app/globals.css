@@ -439,6 +439,8 @@ button:disabled { cursor:not-allowed; opacity:.5; }
   .dash-grid-main,.dash-grid-lists,.dash-payment-summaries { grid-template-columns:1fr; }
   .dash-payment-summary { grid-template-columns:1fr; gap:10px; }
   .dash-payment-summary strong { font-size:18px; }
+  .dash-balance-grid { grid-template-columns:minmax(120px,1fr) repeat(3,minmax(62px,.8fr)); gap:6px; }
+  .dash-balance-item > strong { overflow-wrap:break-word; word-break:normal; hyphens:auto; }
   .dash-panel { padding:16px; }
   .dash-chart { gap:7px; height:175px; }
   .dash-column-value { font-size:8px; }
